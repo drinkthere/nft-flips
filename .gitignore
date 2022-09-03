@@ -12,7 +12,7 @@ node_modules/
 /logs
 *.log
 
-#vscode
+# vscode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

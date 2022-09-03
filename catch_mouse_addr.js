@@ -18,59 +18,57 @@ let db;
 let collectionAddress;
 
 const initDb = async () => {
-    console.log("Start initializing database.");
-    const sqlite3 = require("sqlite3").verbose();
-    const { open } = require("sqlite");
-    db = await open({
-        filename: dbFile,
-        driver: sqlite3.Database,
-    });
-    console.log("Finish initializing database.");
+  console.log("Start initializing database.");
+  const sqlite3 = require("sqlite3").verbose();
+  const { open } = require("sqlite");
+  db = await open({
+    filename: dbFile,
+    driver: sqlite3.Database,
+  });
+  console.log("Finish initializing database.");
 };
 
 const filterCsv = () => {
-    return new Promise((resolve, reject) => {
-        console.log("Start parsing csv file.");
-        const addressList = [];
-        fs.createReadStream(csvFile)
-            .pipe(
-                parser.parse({
-                    columns: true,
-                    delimiter: ",",
-                    trim: true,
-                })
-            )
-            .on("error", reject)
-            .on("data", function (csvrow) {
-                // 保留 public mint 的addr
-                if (csvrow["Method"] == "Mint Public") {
-                    //console.log(csvrow["From"]);
-                    addressList.push(csvrow["From"]);
-                    if (collectionAddress == null) {
-                        collectionAddress = csvrow["To"];
-                    }
-                }
-            })
-            .on("end", function () {
-                console.log("Finish parsing csv file.");
-                // 去重
-                const records = [...new Set(addressList)];
-                resolve(records);
-            });
-    });
+  return new Promise((resolve, reject) => {
+    console.log("Start parsing csv file.");
+    const addressList = [];
+    fs.createReadStream(csvFile)
+      .pipe(
+        parser.parse({
+          columns: true,
+          delimiter: ",",
+          trim: true,
+        })
+      )
+      .on("error", reject)
+      .on("data", function (csvrow) {
+        // 保留 public mint 的addr
+        if (csvrow["Method"] == "Mint Public") {
+          //console.log(csvrow["From"]);
+          addressList.push(csvrow["From"]);
+          if (collectionAddress == null) {
+            collectionAddress = csvrow["To"];
+          }
+        }
+      })
+      .on("end", function () {
+        console.log("Finish parsing csv file.");
+        // 去重
+        const records = [...new Set(addressList)];
+        resolve(records);
+      });
+  });
 };
 
-const save = async (records) => {
-    // tb_address_collection: id, collection, address, create_time, modify_time
-};
+const save = async (records) => {};
 
 const main = async () => {
-    // 初始化数据库
-    await initDb();
-    // 处理 csv 文件
-    const records = await filterCsv();
-    console.log(records);
-    // 写入数据库
-    await save(records);
+  // 初始化数据库
+  await initDb();
+  // 处理 csv 文件
+  const records = await filterCsv();
+  console.log(records);
+  // 写入数据库
+  await save(records);
 };
 main();
