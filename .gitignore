@@ -22,6 +22,8 @@ node_modules/
 # Optional eslint cache
 .eslintcache
 
+# dbs
+/dbs/*
 
 # System Files
 .DS_Store
