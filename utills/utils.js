@@ -1,21 +1,14 @@
 const newInterval = (func, millisecond) => {
-  const inside = async () => {
-    await func();
+    const inside = async () => {
+        await func();
+        setTimeout(inside, millisecond);
+    };
     setTimeout(inside, millisecond);
-  };
-  setTimeout(inside, millisecond);
 };
 
-function wait(ms) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // console.log("Done waiting");
-      resolve(ms);
-    }, ms);
-  });
-}
+const sleep = (wait) => new Promise((resolve) => setTimeout(resolve, wait));
 
 module.exports = {
-  newInterval,
-  wait,
+    newInterval,
+    sleep,
 };

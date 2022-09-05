@@ -1,5 +1,7 @@
 // 数据库相关
 const dbFile = __dirname + "/dbs/mint.db";
+const { sleep } = require("./utills/utils");
+
 let db;
 
 const app = {};
@@ -14,27 +16,9 @@ app.settings = {
 };
 
 app.data = {
-    hash: {},
-    nftTrader: [],
-    dataset: [],
-    latest: 1,
-    staked: [],
+    pricing: {},
+    spam: [],
 };
-
-app.stats = {
-    sent: 0,
-    received: 0,
-    gas: 0,
-    realized: 0,
-    sentOpen: 0,
-    receivedOpen: 0,
-    gasOpen: 0,
-    valueOpen: 0,
-    nftTraderSent: 0,
-    nftTraderReceived: 0,
-    nftTraderGas: 0,
-};
-app.flips = {};
 
 const initDb = async () => {
     console.log("Start initializing database.");
@@ -47,15 +31,57 @@ const initDb = async () => {
     console.log("Finish initializing database.");
 };
 
+const runSql = async (sql) => {
+    db.run(sql, (err) => {
+        if (null != err) {
+            console.log(err);
+            process.exit();
+        }
+    });
+};
+
 const loadAddrs = async () => {
     const sql =
-        "SELECT address FROM tb_collection_address WHERE status=0 ORDER BY id ASC";
+        "SELECT DISTINCT address FROM tb_collection_address WHERE status=0 ORDER BY id ASC";
     const rows = await db.all(sql);
     const addrs = [];
     rows.map((row) => {
         addrs.push(row.address);
     });
     return addrs;
+};
+
+const calProfit = async (addr) => {
+    app.stats = {
+        sent: 0,
+        received: 0,
+        gas: 0,
+        realized: 0,
+        sentOpen: 0,
+        receivedOpen: 0,
+        gasOpen: 0,
+        valueOpen: 0,
+        nftTraderSent: 0,
+        nftTraderReceived: 0,
+        nftTraderGas: 0,
+    };
+    app.data.hash = {};
+    app.data.nftTrader = [];
+    app.data.dataset = [];
+    app.data.latest = 1;
+    app.data.staked = [];
+
+    app.flips = {};
+
+    // 获取["tokennfttx", "tokentx", "txlist", "txlistinternal"]相关数据，用来计算NFT的Flips
+    if (!(await prepareData(addr))) {
+        return false;
+    }
+
+    if (!(await finish(addr))) {
+        return false;
+    }
+    return true;
 };
 
 const prepareData = async (addr) => {
@@ -80,6 +106,7 @@ const fetchTokenNFTTx = async (addr) => {
         "https://api.etherscan.io/api/?module=account&action=tokennfttx&address=" +
         addr +
         "&page=1&offset=10000&sort=desc&apikey=Y56BF6PXMUZPDGC82YX2SQK5HV7EMBG1B8";
+    // console.log(url);
     await fetch(url)
         .then((response) => {
             return response.json();
@@ -91,6 +118,9 @@ const fetchTokenNFTTx = async (addr) => {
 
             if (data["result"].length >= 10000) {
                 console.log("Error, Too Many Results");
+                const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
+                console.log(updateSql);
+                await runSql(updateSql);
                 return;
             }
 
@@ -116,6 +146,7 @@ const fetchTokenTx = async (addr) => {
         "https://api.etherscan.io/api/?module=account&action=tokentx&address=" +
         addr +
         "&page=1&offset=10000&sort=desc&apikey=1764TRITEGDU1FQZG16B641C9CMBSNJB1Q";
+    // console.log(url);
     await fetch(url)
         .then((response) => {
             return response.json();
@@ -123,6 +154,9 @@ const fetchTokenTx = async (addr) => {
         .then((data) => {
             if (data["result"].length >= 10000) {
                 console.log("Error, Too Many Results");
+                const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
+                console.log(updateSql);
+                await runSql(updateSql);
                 return ret;
             }
             if (data["result"].length == 0) {
@@ -166,7 +200,7 @@ const fetchTxList = async (addr) => {
         "https://api.etherscan.io/api/?module=account&action=txlist&address=" +
         addr +
         "&page=1&offset=10000&sort=desc&apikey=RTIPWA3QRYYUEVGA9VN57V6UUG571RV3TB";
-    console.log(url);
+    // console.log(url);
     await fetch(url)
         .then((response) => {
             return response.json();
@@ -182,6 +216,9 @@ const fetchTxList = async (addr) => {
             //   process.exit();
             if (data["result"].length >= 10000) {
                 console.log("Error, Too Many Results");
+                const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
+                console.log(updateSql);
+                await runSql(updateSql);
                 return;
             }
 
@@ -229,6 +266,9 @@ const fetchTxListInternal = async (addr) => {
             }
             if (data["result"].length >= 10000) {
                 console.log("Error, Too Many Results");
+                const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
+                console.log(updateSql);
+                await runSql(updateSql);
                 return;
             }
 
@@ -260,7 +300,7 @@ const fetchTxListInternal = async (addr) => {
     return ret;
 };
 
-const getPricing = async (addr) => {
+const getPricing = async () => {
     const url = "https://jpeg.cash/api/pricing?id=XUEKO-XHDKE-HIGHE";
     let ret = false;
     await fetch(url)
@@ -411,15 +451,14 @@ const finish = async (addr) => {
                         nftInOut: nft["nftInOut"],
                         cryptoInOut: nft["cryptoInOut"],
                         value: nft["valCalc"] * weight,
-                        valueFormatted: commas(
-                            round(
-                                nft["valCalc"] * weight,
-                                app.settings.decimals
-                            )
+                        valueFormatted: round(
+                            nft["valCalc"] * weight,
+                            app.settings.decimals
                         ),
                         gasPaid: nft["gasCalc"],
-                        gasPaidFormatted: commas(
-                            round(nft["gasCalc"], app.settings.decimals)
+                        gasPaidFormatted: round(
+                            nft["gasCalc"],
+                            app.settings.decimals
                         ),
                         standard: "ERC721",
                         position: "Open",
@@ -537,8 +576,9 @@ const finish = async (addr) => {
                                 app.data.pricing[nft["contractAddress"]][
                                     "floor_price"
                                 ];
-                            nft["floorPrice"] = commas(
-                                round(floorPrice, app.settings.decimals)
+                            nft["floorPrice"] = round(
+                                floorPrice,
+                                app.settings.decimals
                             );
                             floorUsed.push(concat_);
                         } else {
@@ -576,10 +616,10 @@ const finish = async (addr) => {
         }
     });
 
-    outputStats();
+    await outputStats(addr);
 };
 
-const outputStats = () => {
+const outputStats = async (addr) => {
     // 计算输赢次数
     let winningFlips = 0;
     let losingFilps = 0;
@@ -595,30 +635,38 @@ const outputStats = () => {
     }
 
     const stats = {
-        sent: commas(round(app.stats.sent, 3)),
-        received: commas(round(app.stats.received, 3)),
-        gasPaid: commas(round(app.stats.gas, 3)),
-        gasPaidOpen: commas(round(app.stats.gasOpen, 3)),
-        sentOpen: commas(round(app.stats.sentOpen, 3)),
-        valueOpen: commas(round(app.stats.valueOpen, 3)),
+        sent: round(app.stats.sent, 3),
+        received: round(app.stats.received, 3),
+        gasPaid: round(app.stats.gas, 3),
+        gasPaidOpen: round(app.stats.gasOpen, 3),
+        sentOpen: round(app.stats.sentOpen, 3),
+        valueOpen: round(app.stats.valueOpen, 3),
 
-        nftTraderSent: commas(round(app.stats.nftTraderSent, 3)),
-        nftTraderReceived: commas(round(app.stats.nftTraderReceived, 3)),
-        nftTraderGasPaid: commas(round(app.stats.nftTraderGas, 3)),
-        realizedWithFees: commas(
-            round(app.stats.received - app.stats.sent - app.stats.gas, 3)
+        nftTraderSent: round(app.stats.nftTraderSent, 3),
+        nftTraderReceived: round(app.stats.nftTraderReceived, 3),
+        nftTraderGasPaid: round(app.stats.nftTraderGas, 3),
+        realizedWithFees: round(
+            app.stats.received - app.stats.sent - app.stats.gas,
+            3
         ),
-        unrealizedWithFees: commas(
-            round(
-                app.stats.valueOpen - app.stats.sentOpen - app.stats.gasOpen,
-                3
-            )
+        unrealizedWithFees: round(
+            app.stats.valueOpen - app.stats.sentOpen - app.stats.gasOpen,
+            3
         ),
         winningFlips,
         losingFilps,
     };
 
     console.log(stats);
+    // 写入数据库
+    const insertSql = `INSERT INTO tb_smart_address_flips_jc (address, sent, received, gas_paid, realized_with_fee, sent_open, value_open, gas_paid_open, unrealized_with_fee, winning_flips, losing_flips ) VALUES ('${addr}', ${stats.sent}, ${stats.received}, ${stats.gasPaid}, ${stats.realizedWithFees}, ${stats.sentOpen}, ${stats.valueOpen}, ${stats.gasPaidOpen}, ${stats.unrealizedWithFees}, ${stats.winningFlips}, ${stats.losingFilps})`;
+    console.log(insertSql);
+    console.log(await runSql(insertSql);
+
+    // 更新地址状态
+    const updateSql = `UPDATE tb_collection_address SET status=1 WHERE address='${addr}'`;
+    console.log(updateSql);
+    await runSql(updateSql);
 };
 
 const getDate = (timeStamp) => {
@@ -656,130 +704,29 @@ const round = function (value, precision) {
     return result;
 };
 
-commas = function (var_) {
-    if (!var_) {
-        return "0.00";
-    }
-    number_ = var_.toString().split(".")[0];
-    decimals_ = var_.toString().split(".")[1] || "00";
-    if (number_.toString().search("-") > -1) {
-        var neg = "-";
-    } else {
-        var neg = "";
-    }
-    num = number_.toString().replace("-", "");
-    switch (num.length) {
-        case 4:
-            number_ = neg + num.slice(0, 1) + "," + num.slice(1, 4);
-            break;
-        //console.log(number_)
-        case 5:
-            number_ = neg + num.slice(0, 2) + "," + num.slice(2, 5);
-            break;
-        case 6:
-            number_ = neg + num.slice(0, 3) + "," + num.slice(3, 6);
-            break;
-        case 7:
-            number_ =
-                neg +
-                num.slice(0, 1) +
-                "," +
-                num.slice(1, 4) +
-                "," +
-                num.slice(4, 7);
-            break;
-        case 8:
-            number_ =
-                neg +
-                num.slice(0, 2) +
-                "," +
-                num.slice(2, 5) +
-                "," +
-                num.slice(5, 8);
-            break;
-        case 9:
-            number_ =
-                neg +
-                num.slice(0, 3) +
-                "," +
-                num.slice(3, 6) +
-                "," +
-                num.slice(6, 9);
-            break;
-        case 10:
-            number_ =
-                neg +
-                num.slice(0, 1) +
-                "," +
-                num.slice(1, 4) +
-                "," +
-                num.slice(4, 7) +
-                "," +
-                num.slice(7, 10);
-            break;
-        case 11:
-            number_ =
-                neg +
-                num.slice(0, 2) +
-                "," +
-                num.slice(2, 5) +
-                "," +
-                num.slice(5, 8) +
-                "," +
-                num.slice(8, 11);
-            break;
-        case 12:
-            number_ =
-                neg +
-                num.slice(0, 3) +
-                "," +
-                num.slice(3, 6) +
-                "," +
-                num.slice(6, 9) +
-                "," +
-                num.slice(9, 12);
-            break;
-        case 13:
-            number_ =
-                neg +
-                num.slice(0, 1) +
-                "," +
-                num.slice(1, 4) +
-                "," +
-                num.slice(4, 7) +
-                "," +
-                num.slice(7, 10) +
-                "," +
-                num.slice(10, 13);
-            break;
-    }
-    return number_ + "." + decimals_;
-};
-
 const main = async () => {
     await initDb();
 
+    // 获取地板价和spam的collection address
+    if (!(await getPricing())) {
+        return false;
+    }
+
     // 获取地址的
     const addrs = await loadAddrs();
-    console.log(addrs);
-    process.exit();
+    // 遍历地址，计算地址盈亏
+    for (let i = 0; i < 100; i++) {
+        const addr = addrs[i];
 
-    // 循环获取每个地址的胜率信息
-
-    const addr = "0x8bcfc7a0990d3853daa69018a8e9471e0757385c".toLowerCase();
-    // 获取["tokennfttx", "tokentx", "txlist", "txlistinternal"]相关数据，用来计算NFT的Flips
-    if (!(await prepareData(addr))) {
-        return false;
+        console.log("Starting calculate " + addr + "'s profit");
+        await calProfit(addr);
+        console.log("Finish calculate " + addr + "'s profit");
+        await sleep(2000);
     }
-    // console.log(app.data.hash);
 
-    if (!(await getPricing(addr))) {
-        return false;
-    }
-    // console.log(app.data.spam, app.data.pricing);
-
-    if (!(await finish(addr))) {
-        return false;
-    }
+    // const addr = "0xfc91e14a606cef9381c3f2761fafb613df5c2dcd";
+    // console.log("Starting calculate " + addr + "'s profit");
+    // await calProfit(addr);
+    // console.log("Finish calculate " + addr + "'s profit");
 };
 main();
