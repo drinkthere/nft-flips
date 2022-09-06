@@ -1,6 +1,7 @@
 // 数据库相关
 const dbFile = __dirname + "/dbs/mint.db";
 const { sleep } = require("./utills/utils");
+const fetch = require("node-fetch");
 
 let db;
 
@@ -112,6 +113,7 @@ const fetchTokenNFTTx = async (addr) => {
             return response.json();
         })
         .then((data) => {
+            // console.log(data);
             if (data["status"] != 1) {
                 console.log("Connection Error");
             }
@@ -120,7 +122,7 @@ const fetchTokenNFTTx = async (addr) => {
                 console.log("Error, Too Many Results");
                 const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
                 console.log(updateSql);
-                await runSql(updateSql);
+                runSql(updateSql);
                 return;
             }
 
@@ -156,7 +158,7 @@ const fetchTokenTx = async (addr) => {
                 console.log("Error, Too Many Results");
                 const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
                 console.log(updateSql);
-                await runSql(updateSql);
+                runSql(updateSql);
                 return ret;
             }
             if (data["result"].length == 0) {
@@ -185,8 +187,8 @@ const fetchTokenTx = async (addr) => {
                     app.data.hash[result.hash]["crypto"] = [];
                     app.data.hash[result.hash]["crypto"].push(result);
                 }
-                ret = true;
             });
+            ret = true;
         });
     // console.log(app.data.hash);
     return ret;
@@ -206,6 +208,7 @@ const fetchTxList = async (addr) => {
             return response.json();
         })
         .then((data) => {
+            // console.log(data);
             //   results = JSON.parse(data["data"]);
             //   console.log(results["result"].length);
             //   process.exit();
@@ -218,7 +221,7 @@ const fetchTxList = async (addr) => {
                 console.log("Error, Too Many Results");
                 const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
                 console.log(updateSql);
-                await runSql(updateSql);
+                runSql(updateSql);
                 return;
             }
 
@@ -256,19 +259,17 @@ const fetchTxListInternal = async (addr) => {
         "https://api.etherscan.io/api/?module=account&action=txlistinternal&address=" +
         addr +
         "&page=1&offset=10000&sort=desc&apikey=8DRIPRJBDSQQ3HVS5F3GUU7YFVCMC3R68M";
+    // console.log(url);
     await fetch(url)
         .then((response) => {
             return response.json();
         })
         .then((data) => {
-            if (data["status"] != 1) {
-                console.log("Connection Error");
-            }
             if (data["result"].length >= 10000) {
                 console.log("Error, Too Many Results");
                 const updateSql = `UPDATE tb_collection_address SET status=2 WHERE address='${addr}'`;
                 console.log(updateSql);
-                await runSql(updateSql);
+                runSql(updateSql);
                 return;
             }
 
@@ -293,8 +294,8 @@ const fetchTxListInternal = async (addr) => {
                     app.data.hash[result.hash]["crypto"] = [];
                     app.data.hash[result.hash]["crypto"].push(result);
                 }
-                ret = true;
             });
+            ret = true;
         });
     // console.log(app.data.hash);
     return ret;
@@ -661,7 +662,7 @@ const outputStats = async (addr) => {
     // 写入数据库
     const insertSql = `INSERT INTO tb_smart_address_flips_jc (address, sent, received, gas_paid, realized_with_fee, sent_open, value_open, gas_paid_open, unrealized_with_fee, winning_flips, losing_flips ) VALUES ('${addr}', ${stats.sent}, ${stats.received}, ${stats.gasPaid}, ${stats.realizedWithFees}, ${stats.sentOpen}, ${stats.valueOpen}, ${stats.gasPaidOpen}, ${stats.unrealizedWithFees}, ${stats.winningFlips}, ${stats.losingFilps})`;
     console.log(insertSql);
-    console.log(await runSql(insertSql);
+    await runSql(insertSql);
 
     // 更新地址状态
     const updateSql = `UPDATE tb_collection_address SET status=1 WHERE address='${addr}'`;
