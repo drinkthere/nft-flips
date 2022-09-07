@@ -716,7 +716,7 @@ const main = async () => {
     // 获取地址的
     const addrs = await loadAddrs();
     // 遍历地址，计算地址盈亏
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < addrs.length; i++) {
         const addr = addrs[i];
 
         console.log("Starting calculate " + addr + "'s profit");
