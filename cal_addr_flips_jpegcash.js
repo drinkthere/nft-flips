@@ -404,11 +404,6 @@ const finish = async (addr) => {
                     app.data.dataset.push(obj);
                 }
             } else {
-                if (uniqueNfts.length > 1) {
-                    console.log(uniqueNfts.length);
-                    console.log(nft);
-                    console.log(uniqueCryptos);
-                }
                 let gasFlag = 1;
                 uniqueCryptos.map((crypto) => {
                     nft["gasCalc"] =
@@ -699,6 +694,23 @@ const round = function (value, precision) {
     return result;
 };
 
+app.getDate = (timeStamp) => {
+    if (!timeStamp) return "";
+    var a = new Date(timeStamp * 1000);
+
+    var year = a.getFullYear();
+    var month = a.getMonth() + 1;
+    var date = a.getDate();
+
+    var date_ =
+        year +
+        "-" +
+        (month.toString().length == 1 ? "0" + month : month) +
+        "-" +
+        (date.toString().length == 1 ? "0" + date : date);
+    return date_;
+};
+
 const main = async () => {
     await initDb();
 
@@ -708,20 +720,20 @@ const main = async () => {
     }
 
     // // 获取地址的
-    // const addrs = await loadAddrs();
-    // // 遍历地址，计算地址盈亏
-    // for (let i = 0; i < addrs.length; i++) {
-    //     const addr = addrs[i];
+    const addrs = await loadAddrs();
+    // 遍历地址，计算地址盈亏
+    for (let i = 0; i < addrs.length; i++) {
+        const addr = addrs[i];
 
-    //     console.log("Starting calculate " + addr + "'s profit");
-    //     await calProfit(addr);
-    //     console.log("Finish calculate " + addr + "'s profit");
-    //     await sleep(2000);
-    // }
+        console.log("Starting calculate " + addr + "'s profit");
+        await calProfit(addr);
+        console.log("Finish calculate " + addr + "'s profit");
+        await sleep(2000);
+    }
 
-    const addr = "0xfc91e14a606cef9381c3f2761fafb613df5c2dcd";
-    console.log("Starting calculate " + addr + "'s profit");
-    await calProfit(addr);
-    console.log("Finish calculate " + addr + "'s profit");
+    // const addr = "0xfc91e14a606cef9381c3f2761fafb613df5c2dcd";
+    // console.log("Starting calculate " + addr + "'s profit");
+    // await calProfit(addr);
+    // console.log("Finish calculate " + addr + "'s profit");
 };
 main();
