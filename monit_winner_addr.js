@@ -1,5 +1,8 @@
 const { sleep } = require("./utills/utils");
 const fetch = require("node-fetch");
+const TelegramBot = require("node-telegram-bot-api");
+const HttpsProxyAgent = require("https-proxy-agent");
+
 const app = {
     data: {},
 };
@@ -7,7 +10,17 @@ const app = {
 // 其他配置文件
 const configs = require("./configs/config.json");
 
+// etherscan api keys
 const apiKeys = configs.apiKeys;
+
+// proxies
+const proxies = configs.proxies;
+const proxyAuth = configs.proxyAuth;
+
+// telegram token
+const telegramToken = configs.telegramToken;
+const channelId = configs.telegramChannelId;
+const teleBot = new TelegramBot(telegramToken);
 
 let retryNum = 0;
 const maxRetryNum = configs.maxRetryNum;
@@ -32,11 +45,6 @@ const runSql = async (sql) => {
             process.exit();
         }
     });
-};
-
-const updateStatus = async () => {
-    // 设置所有地址的status=0，启动更新
-    await runSql("update tb_monitoring_address set status=0");
 };
 
 const loadWinners = async () => {
@@ -80,12 +88,23 @@ const fetchTokenNFTTx = async (winner) => {
     // 获取请求用的key
     const index = Math.floor(Math.random() * apiKeys.length);
     const apiKey = apiKeys[index];
+
+    // 获取请求用的代理
+    const pindex = Math.floor(Math.random() * proxies.length);
+    const proxy = proxies[pindex];
     const url =
         "https://api.etherscan.io/api/?module=account&action=tokennfttx&address=" +
         winner.addr +
         "&page=1&offset=50&sort=desc&apikey=" +
         apiKey;
-    await fetch(url)
+    await fetch(url, {
+        method: "GET",
+        redirect: "follow",
+        timeout: 10000,
+        agent: new HttpsProxyAgent(
+            `http://${proxyAuth.username}:${proxyAuth.password}@${proxy.ip}:${proxy.port}`
+        ),
+    })
         .then((response) => {
             return response.json();
         })
@@ -157,6 +176,7 @@ const findNewAction = async (winner) => {
             }
 
             obj = {
+                blockNumber: nft["blockNumber"],
                 hash: hash,
                 transactionType: type,
                 standard: "ERC721",
@@ -175,16 +195,24 @@ const findNewAction = async (winner) => {
 
 const sendAlarm = async () => {
     let message = "";
-    app.data.dataset.map((nft) => {
-        message += `${nft.addr} has new tx, type=${nft.transactionType}, collection=${nft.tokenName}, tokenId=${nft.tokenID}, hash=${nft.hash}\n`;
-    });
-    console.log(message);
+    Promise.all(
+        app.data.dataset.map(async (nft) => {
+            message += `<a href="https://etherscan.io/address/${nft.addr}">${nft.addr}</a> has new <a href="https://etherscan.io/tx/${nft.hash}">tx</a>, type=${nft.transactionType}, collection=<a href="https://etherscan.io/token/${nft.contractAddress}">${nft.tokenName}</a>, tokenId=${nft.tokenID}\n`;
+            // 更新lastest block number
+            await runSql(
+                `update tb_monitoring_address set latest_blknum=${nft.blockNumber} where address='${nft.addr}'`
+            );
+        })
+    );
+    if (message != "") {
+        teleBot.sendMessage(channelId, message, {
+            parse_mode: "HTML",
+        });
+    }
 };
 
 const main = async () => {
     await initDb();
-
-    await updateStatus();
 
     const winners = await loadWinners();
     // console.log(winners);
@@ -192,7 +220,9 @@ const main = async () => {
     // 遍历地址，计算地址盈亏
     for (let i = 0; i < winners.length; i++) {
         const winner = winners[i];
+        console.log(`Start monitoring ${winner.addr}`);
         await monitorNFTTx(winner);
+        console.log(`Finish monitoring ${winner.addr}`);
         await sleep(2000);
     }
 };

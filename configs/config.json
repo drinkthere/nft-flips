@@ -20,6 +20,22 @@
         "3HEKTZ13QU9I3VZH4CNPDWDYFEPJ435CFN", 
         "39WVNMSS577ZY2BBG94YI84F5EAFZNPV4E", 
         "URM8Q2VKR7SGGM9SKW9G4W6ER8BCTGHAWI"],
+    "proxies": [
+        {"ip": "45.13.184.226", "port": 6787},
+        {"ip": "45.13.184.229", "port": 6790},
+        {"ip": "185.199.228.220", "port": 7300},
+        {"ip": "185.199.231.45", "port": 8382},
+        {"ip": "144.168.217.164", "port": 8856},
+        {"ip": "45.134.187.39", "port": 7076},
+        {"ip": "185.199.229.156", "port": 7492},
+        {"ip": "144.168.217.88", "port": 8780},
+        {"ip": "45.155.68.129", "port": 8133},
+        {"ip": "144.168.217.122", "port": 8814}
+    ],
+    "proxyAuth": {
+        "username": "tmwbcbmt",
+        "password": "kihcoi2qjv10"
+    },
     "maxRetryNum": 3,
     "telegramToken": "5419756672:AAHoIr62fJBrPcfSY1y-k_Lhu9_VljjjuiU",
     "telegramChannelId": -775740909
