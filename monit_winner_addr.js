@@ -115,14 +115,24 @@ const fetchTokenNFTTx = async (winner) => {
             }
 
             data["result"].map((result) => {
-                if (result.blockNumber > winner.latest_blknum) {
-                    if (app.data.hash.hasOwnProperty(result.hash)) {
-                        app.data.hash[result.hash]["nft"].push(result);
-                    } else {
-                        app.data.hash[result.hash] = {};
-                        app.data.hash[result.hash]["nft"] = [];
-                        app.data.hash[result.hash]["nft"].push(result);
-                    }
+                // 只留新的交易
+                if (result.blockNumber <= winner.latest_blknum) {
+                    return;
+                }
+                // 过滤掉ENS
+                if (
+                    result.contractAddress ==
+                    "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
+                ) {
+                    return;
+                }
+
+                if (app.data.hash.hasOwnProperty(result.hash)) {
+                    app.data.hash[result.hash]["nft"].push(result);
+                } else {
+                    app.data.hash[result.hash] = {};
+                    app.data.hash[result.hash]["nft"] = [];
+                    app.data.hash[result.hash]["nft"].push(result);
                 }
             });
         });
