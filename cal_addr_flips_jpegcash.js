@@ -103,6 +103,8 @@ const prepareData = async (addr) => {
 
 const fetchTokenNFTTx = async (addr) => {
     let ret = false;
+    // Get a list of 'ERC721 - Token Transfer Events' by Address
+    // https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-erc721-token-transfer-events-by-address
     const url =
         "https://api.etherscan.io/api/?module=account&action=tokennfttx&address=" +
         addr +
@@ -144,6 +146,8 @@ const fetchTokenNFTTx = async (addr) => {
 
 const fetchTokenTx = async (addr) => {
     let ret = false;
+    // Get a list of 'ERC20 - Token Transfer Events' by Address
+    // https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-erc20-token-transfer-events-by-address
     const url =
         "https://api.etherscan.io/api/?module=account&action=tokentx&address=" +
         addr +
@@ -196,6 +200,8 @@ const fetchTokenTx = async (addr) => {
 
 const fetchTxList = async (addr) => {
     let ret = false;
+    // Get a list of 'Normal' Transactions By Address
+    // https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-normal-transactions-by-address
     //   const url =
     //     "https://jpeg.cash/api/etherscan?address=" + addr + "&action=txlist";
     const url =
@@ -255,6 +261,8 @@ const fetchTxList = async (addr) => {
 
 const fetchTxListInternal = async (addr) => {
     let ret = false;
+    // Get "Internal Transactions" by Block Range
+    // https://docs.etherscan.io/api-endpoints/accounts#get-internal-transactions-by-block-range
     const url =
         "https://api.etherscan.io/api/?module=account&action=txlistinternal&address=" +
         addr +
@@ -345,6 +353,7 @@ const finish = async (addr) => {
             return !nft["duplicate"];
         });
         const uniqueCryptos = app.data.hash[hash]["crypto"];
+
         uniqueNfts.map((nft) => {
             //flow of nft
             switch (true) {
@@ -364,7 +373,6 @@ const finish = async (addr) => {
 
             // airdrops
             if (uniqueCryptos.length == 0) {
-                curDate = getDate(nft["timeStamp"]);
                 obj = {
                     hash,
                     nftInOut: nft["nftInOut"],
@@ -396,6 +404,11 @@ const finish = async (addr) => {
                     app.data.dataset.push(obj);
                 }
             } else {
+                if (uniqueNfts.length > 1) {
+                    console.log(uniqueNfts.length);
+                    console.log(nft);
+                    console.log(uniqueCryptos);
+                }
                 let gasFlag = 1;
                 uniqueCryptos.map((crypto) => {
                     nft["gasCalc"] =
@@ -444,8 +457,6 @@ const finish = async (addr) => {
                             weight = -1;
                             break;
                     }
-
-                    curDate = getDate(nft["timeStamp"]);
 
                     obj = {
                         hash: hash,
@@ -670,23 +681,6 @@ const outputStats = async (addr) => {
     await runSql(updateSql);
 };
 
-const getDate = (timeStamp) => {
-    if (!timeStamp) return "";
-    var a = new Date(timeStamp * 1000);
-
-    var year = a.getFullYear();
-    var month = a.getMonth() + 1;
-    var date = a.getDate();
-
-    var date_ =
-        year +
-        "-" +
-        (month.toString().length == 1 ? "0" + month : month) +
-        "-" +
-        (date.toString().length == 1 ? "0" + date : date);
-    return date_;
-};
-
 const round = function (value, precision) {
     if (!value) return 0;
     var multiplier = Math.pow(10, precision || 0);
@@ -713,21 +707,21 @@ const main = async () => {
         return false;
     }
 
-    // 获取地址的
-    const addrs = await loadAddrs();
-    // 遍历地址，计算地址盈亏
-    for (let i = 0; i < addrs.length; i++) {
-        const addr = addrs[i];
+    // // 获取地址的
+    // const addrs = await loadAddrs();
+    // // 遍历地址，计算地址盈亏
+    // for (let i = 0; i < addrs.length; i++) {
+    //     const addr = addrs[i];
 
-        console.log("Starting calculate " + addr + "'s profit");
-        await calProfit(addr);
-        console.log("Finish calculate " + addr + "'s profit");
-        await sleep(2000);
-    }
+    //     console.log("Starting calculate " + addr + "'s profit");
+    //     await calProfit(addr);
+    //     console.log("Finish calculate " + addr + "'s profit");
+    //     await sleep(2000);
+    // }
 
-    // const addr = "0xfc91e14a606cef9381c3f2761fafb613df5c2dcd";
-    // console.log("Starting calculate " + addr + "'s profit");
-    // await calProfit(addr);
-    // console.log("Finish calculate " + addr + "'s profit");
+    const addr = "0xfc91e14a606cef9381c3f2761fafb613df5c2dcd";
+    console.log("Starting calculate " + addr + "'s profit");
+    await calProfit(addr);
+    console.log("Finish calculate " + addr + "'s profit");
 };
 main();

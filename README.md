@@ -19,3 +19,72 @@
 
 -- addressA mint 了 NFT，然后转给 addressB，jc 里面算亏了 gas 费的 close 交易，fw 里面不计入统计
 -- addressA mint 了 NFT，然后 stake 了，jc 里面算亏了 gas 费的 close 交易
+
+API:
+Get a list of 'ERC1155 - Token Transfer Events' by Address
+https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-erc1155-token-transfer-events-by-address
+https://api.etherscan.io/api
+?module=account
+&action=token1155tx
+&contractaddress=0x76be3b62873462d2142405439777e971754e8e77
+&address=0x83f564d180b58ad9a02a449105568189ee7de8cb
+&page=1
+&offset=100
+&startblock=0
+&endblock=99999999
+&sort=asc
+&apikey=YourApiKeyToken
+
+Get a list of 'ERC721 - Token Transfer Events' by Address
+https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-erc721-token-transfer-events-by-address
+https://api.etherscan.io/api
+?module=account
+&action=tokennfttx
+&contractaddress=0x06012c8cf97bead5deae237070f9587f8e7a266d
+&address=0x6975be450864c02b4613023c2152ee0743572325
+&page=1
+&offset=100
+&startblock=0
+&endblock=27025780
+&sort=asc
+&apikey=YourApiKeyToken
+
+Get a list of 'ERC20 - Token Transfer Events' by Address
+https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-erc20-token-transfer-events-by-address
+https://api.etherscan.io/api
+?module=account
+&action=tokentx
+&contractaddress=0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2
+&address=0x4e83362442b8d1bec281594cea3050c8eb01311c
+&page=1
+&offset=100
+&startblock=0
+&endblock=27025780
+&sort=asc
+&apikey=YourApiKeyToken
+
+Get "Internal Transactions" by Block Range
+https://docs.etherscan.io/api-endpoints/accounts#get-internal-transactions-by-block-range
+https://api.etherscan.io/api
+?module=account
+&action=txlist
+&address=0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC
+&startblock=0
+&endblock=99999999
+&page=1
+&offset=10
+&sort=asc
+&apikey=YourApiKeyToken
+
+Get a list of 'Normal' Transactions By Address
+https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-normal-transactions-by-address
+https://api.etherscan.io/api
+?module=account
+&action=txlist
+&address=0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC
+&startblock=0
+&endblock=99999999
+&page=1
+&offset=10
+&sort=asc
+&apikey=YourApiKeyToken
