@@ -172,7 +172,11 @@ const findNewAction = async (winner) => {
                 ) {
                     type = "Mint";
                 } else if (nft.from.toLowerCase() != winner.addr) {
-                    type = "TransferIn|Airdrop";
+                    if (nft.gasUsed > 30000) {
+                        type = "Mint";
+                    } else {
+                        type = "TransferIn";
+                    }
                 }
             } else if (winner.addr == nft.from.toLowerCase()) {
                 if (
@@ -181,7 +185,11 @@ const findNewAction = async (winner) => {
                 ) {
                     type = "Burn";
                 } else if (nft.to.toLowerCase() != winner.addr) {
-                    type = "TransferOut|Sell";
+                    if (nft.gasUsed > 30000) {
+                        type = "Sell";
+                    } else {
+                        type = "TransferOut";
+                    }
                 }
             }
 
