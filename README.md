@@ -1,8 +1,8 @@
 一。通过 scripts 下的 create_table.js 创建需要的表 ✓
 二。找到金狗项目，再 etherscan 下载 public mint 时间段的 csv 文件，放到 inputs/transactions 目录下，文件名用 collection name。✓
-三。执行 node catch_smart_addr.js --collection={collection name}，将聪明地址解析入库。✓
-四。执行 node cal_addr_flips_jpegcash.js 使用 jpeg.cash 的规则评估一个 address 的盈利情况 🚗
-五。执行 node monit_winner_addr.js 来获取和监听最优的 5 个地址的下一次 mint 操作，决定是否跟单
+三。执行 node catch_smart_addr.js --collection={collection name} --method={method name}，将聪明地址解析入库。method name 是该 collection 的 mint 方法名。✓
+四。执行 node cal_addr_flips_jpegcash.js 使用 jpeg.cash 的规则评估一个 address 的盈利情况 ✓
+五。执行 node monit_winner_addr.js 来获取和监听最优的 5 个地址的下一次 mint 操作，决定是否跟单 ✓
 
 其他说明：
 
@@ -19,6 +19,17 @@
 
 -- addressA mint 了 NFT，然后转给 addressB，jc 里面算亏了 gas 费的 close 交易，fw 里面不计入统计
 -- addressA mint 了 NFT，然后 stake 了，jc 里面算亏了 gas 费的 close 交易
+
+scripts:
+node catch_smart_addr.js --collection=digidaigaku --method='Mint Public';
+node catch_smart_addr.js --collection=mutant-ape-yacht-club --method='Mint Mutants';
+node catch_smart_addr.js --collection=boredapeyachtclub --method='Mint Ape';
+node catch_smart_addr.js --collection=azuki --method='Auction Mint';
+node catch_smart_addr.js --collection=proof-moonbirds --method='Mint PROOF';
+node catch_smart_addr.js --collection=doodles-official --method='Mint Allow List|Mint';
+node catch_smart_addr.js --collection=meebits --method='Mint With Punk Or Glyph|Mint';
+node catch_smart_addr.js --collection=cool-cats-nft --method='Adopt';
+node catch_smart_addr.js --collection=bored-ape-kennel-club --method='Adopt Dog|Adopt N Dogs';
 
 API:
 Get a list of 'ERC1155 - Token Transfer Events' by Address

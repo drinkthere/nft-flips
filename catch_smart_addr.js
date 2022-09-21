@@ -5,6 +5,7 @@
 
 // 金狗项目名，与 csv 文件相同
 const { collection } = require("minimist")(process.argv.slice(2));
+const { method } = require("minimist")(process.argv.slice(3));
 const csvFile = __dirname + "/inputs/transactions/" + collection + ".csv";
 
 // 初始化 csv 解析器
@@ -43,7 +44,11 @@ const filterCsv = () => {
             .on("error", reject)
             .on("data", function (csvrow) {
                 // 保留 public mint 的addr
-                if (csvrow["Method"] == "Mint Public") {
+                methodArr = method.split("|");
+                if (
+                    -1 != methodArr.indexOf(csvrow["Method"]) &&
+                    csvrow["Status"] == ""
+                ) {
                     //console.log(csvrow["From"]);
                     addressList.push(csvrow["From"]);
                     if (collectionAddress == null) {
