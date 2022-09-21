@@ -99,3 +99,10 @@ https://api.etherscan.io/api
 &offset=10
 &sort=asc
 &apikey=YourApiKeyToken
+
+1. 查看 fullnode 节点
+2. 增加 nft 前 100 的 address
+3. monit 前 100 distinct address 的收益，把 roi 算出来写上
+4. 根据 roi 来获取待监控的地址
+5. 增加监控的地址
+6. 熟悉下 archive node 的搭建
