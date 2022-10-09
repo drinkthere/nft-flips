@@ -91,6 +91,9 @@ const parseAmount = (method, abi, data) => {
 const lisenToMint = function () {
     provider.on("pending", async (tx) => {
         const transaction = await provider.getTransaction(tx);
+        if (!transaction) {
+            return;
+        }
 
         // 确保from 在白名单中
         const from = transaction["from"].toLocaleLowerCase();
