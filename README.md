@@ -30,6 +30,8 @@ node catch_smart_addr.js --collection=doodles-official --method='Mint Allow List
 node catch_smart_addr.js --collection=meebits --method='Mint With Punk Or Glyph|Mint';
 node catch_smart_addr.js --collection=cool-cats-nft --method='Adopt';
 node catch_smart_addr.js --collection=bored-ape-kennel-club --method='Adopt Dog|Adopt N Dogs';
+node catch_smart_addr.js --collection=lootproject --method='Claim';
+node catch_smart_addr.js --collection=world-of-women-nft --method='Claim Reserved|Mint';
 
 API:
 Get a list of 'ERC1155 - Token Transfer Events' by Address
