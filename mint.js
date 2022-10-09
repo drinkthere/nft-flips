@@ -17,7 +17,7 @@ const PK = process.env.PK;
 const wallet = new ethers.Wallet(PK, provider);
 const walletFlashbot = new ethers.Wallet(PK, flashbotProvider);
 // 每次跟单最多投入的eth数量
-const maxEthPerMint = "0.006";
+const maxEthPerMint = "0.001";
 // 0xa0712d68: mint
 const methods = ["0xa0712d68"];
 const abis = {
@@ -165,7 +165,7 @@ const lisenToMint = function () {
     provider.on("block", (block) => {
         provider.getBlock(block).then((data) => {
             baseFeePerGas = data["baseFeePerGas"];
-            maxFeePerGas = baseFeePerGas.mul(3).div(2); // 1.5 * baseFeePerGas
+            maxFeePerGas = baseFeePerGas.mul(13).div(10); // 1.3 * baseFeePerGas
             console.log(
                 baseFeePerGas.toNumber(),
                 maxFeePerGas.toNumber(),
