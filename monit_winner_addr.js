@@ -2,14 +2,19 @@ const { sleep } = require("./utills/utils");
 const fetch = require("node-fetch");
 const TelegramBot = require("node-telegram-bot-api");
 const HttpsProxyAgent = require("https-proxy-agent");
+const ethers = require("ethers");
+
+const fs = require("fs");
 
 const app = {
     data: {},
+    contracts: {},
 };
 
 // 其他配置文件
 const configs = require("./configs/config.json");
-
+const wssUrl = configs["providerWssUrl"];
+const provider = new ethers.providers.WebSocketProvider(wssUrl);
 // etherscan api keys
 const apiKeys = configs.apiKeys;
 
@@ -213,20 +218,181 @@ const findNewAction = async (winner) => {
 
 const sendAlarm = async () => {
     let message = "";
-    Promise.all(
-        app.data.dataset.map(async (nft) => {
-            message += `<a href="https://etherscan.io/address/${nft.addr}">${nft.addr}</a> has new <a href="https://etherscan.io/tx/${nft.hash}">tx</a>, type=${nft.transactionType}, collection=<a href="https://etherscan.io/token/${nft.contractAddress}">${nft.tokenName}</a>, tokenId=${nft.tokenID}\n`;
-            // 更新lastest block number
-            await runSql(
-                `update tb_monitoring_address set latest_blknum=${nft.blockNumber} where address='${nft.addr}'`
-            );
-        })
-    );
+    for (let i = 0; i < app.data.dataset.length; i++) {
+        const nft = app.data.dataset[i];
+        const contractAddr = nft.contractAddress;
+        if (nft.transactionType != "Mint") {
+            message += `<a href="https://etherscan.io/address/${
+                nft.addr
+            }">${nft.addr.slice(
+                -6
+            )}</a> has new <a href="https://etherscan.io/tx/${
+                nft.hash
+            }">tx</a>, type=${
+                nft.transactionType
+            }, collection=<a href="https://etherscan.io/token/${
+                nft.contractAddress
+            }">${nft.tokenName} (${nft.contractAddress.slice(
+                0,
+                6
+            )})</a>, tokenId=${nft.tokenID}\n`;
+        } else {
+            if (app.contracts[contractAddr] == null) {
+                app.contracts[contractAddr] = {
+                    abi: "",
+                    maxSupply: 0,
+                    totalSupply: 0,
+                    txInfo: null,
+                };
+                try {
+                    // 获取contract的abi
+                    await fetchAbi(contractAddr);
+                    const abi = app.contracts[contractAddr].abi;
+                    // 初始化contract，获取maxSupply, totalSupply
+                    const contract = new ethers.Contract(
+                        contractAddr,
+                        abi,
+                        provider
+                    );
+                    const maxSupply = await fetchMaxSupply(contract, abi);
+                    const totalSupply = await contract.totalSupply();
+                    app.contracts[contractAddr]["maxSupply"] =
+                        maxSupply.toNumber();
+                    app.contracts[contractAddr]["totalSupply"] =
+                        totalSupply.toNumber();
+
+                    // 获取tx细节
+                    app.contracts[contractAddr]["txInfo"] = await fetchTxInfo(
+                        nft.hash,
+                        abi
+                    );
+                    // write JSON string to a file
+                    const cfgFile = __dirname + `/configs/${contractAddr}.json`;
+                    if (fs.existsSync(cfgFile)) {
+                        fs.unlinkSync(cfgFile);
+                    }
+                    const cfg = JSON.stringify(
+                        app.contracts[contractAddr],
+                        null,
+                        4
+                    );
+                    fs.writeFile(cfgFile, cfg, (err) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+            message += `(${app.contracts[contractAddr]["totalSupply"]}/${
+                app.contracts[contractAddr]["maxSupply"]
+            })<a href="https://etherscan.io/address/${
+                nft.addr
+            }">${nft.addr.slice(
+                -6
+            )}</a> has new <a href="https://etherscan.io/tx/${
+                nft.hash
+            }">tx</a>, type=${
+                nft.transactionType
+            }, collection=<a href="https://etherscan.io/token/${
+                nft.contractAddress
+            }">${nft.tokenName}(${nft.contractAddress.slice(
+                0,
+                6
+            )})</a>, tokenId=${nft.tokenID}\n`;
+        }
+        // 更新lastest block number
+        await runSql(
+            `update tb_monitoring_address set latest_blknum=${nft.blockNumber} where address='${nft.addr}'`
+        );
+    }
+
     if (message != "") {
         teleBot.sendMessage(channelId, message, {
             parse_mode: "HTML",
         });
     }
+
+    // mint相关信息写入文件中, 文件名用contractAddress
+};
+
+const fetchAbi = async (contractAddr) => {
+    // 获取请求用的key
+    const index = Math.floor(Math.random() * apiKeys.length);
+    const apiKey = apiKeys[index];
+
+    // 获取请求用的代理
+    const pindex = Math.floor(Math.random() * proxies.length);
+    const proxy = proxies[pindex];
+
+    const url =
+        "https://api.etherscan.io/api?module=contract&action=getabi&address=" +
+        contractAddr +
+        "&apikey=" +
+        apiKey;
+    await fetch(url, {
+        method: "GET",
+        redirect: "follow",
+        timeout: 10000,
+        agent: new HttpsProxyAgent(
+            `http://${proxyAuth.username}:${proxyAuth.password}@${proxy.ip}:${proxy.port}`
+        ),
+    })
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            if (data["status"] != 1) {
+                console.log("Connection Error");
+            }
+            app.contracts[contractAddr] = {
+                abi: data["result"],
+            };
+        });
+};
+
+const fetchMaxSupply = async (contract, abi) => {
+    let maxSupply = ethers.BigNumber.from(0);
+    if (abi.indexOf("MAX_SUPPLY") != -1) {
+        maxSupply = await contract.MAX_SUPPLY();
+    } else if (abi.indexOf("MAX_TOKENS") != -1) {
+        maxSupply = await contract.MAX_TOKENS();
+    } else if (abi.indexOf("maxSupply") != -1) {
+        maxSupply = await contract.maxSupply();
+    } else if (abi.indexOf("maxToken") != -1) {
+        maxSupply = await contract.maxToken();
+    }
+    return maxSupply;
+};
+
+const fetchTxInfo = async (hash, abi) => {
+    const tx = await provider.getTransaction(hash);
+    const iface = new ethers.utils.Interface(abi);
+    const functionName = iface.getFunction(tx.data.slice(0, 10)).name;
+    const decodedArgs = iface.decodeFunctionData(tx.data.slice(0, 10), tx.data);
+    let arrArgs = [];
+    let mapArgs = {};
+    for (let k in decodedArgs) {
+        if (isInteger(k)) {
+            arrArgs.push(decodedArgs[k]);
+        } else {
+            mapArgs[k] = decodedArgs[k];
+        }
+    }
+
+    return {
+        gasLimit: tx.gasLimit,
+        maxPriorityFeePerGas: tx.maxPriorityFeePerGas,
+        maxFeePerGas: tx.maxFeePerGas,
+        value: tx.value,
+        functionName,
+        arrArgs,
+        mapArgs,
+    };
+};
+const isInteger = (obj) => {
+    return obj % 1 === 0;
 };
 
 const main = async () => {
