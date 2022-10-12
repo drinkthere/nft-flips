@@ -215,7 +215,20 @@ const sendAlarm = async () => {
     let message = "";
     Promise.all(
         app.data.dataset.map(async (nft) => {
-            message += `<a href="https://etherscan.io/address/${nft.addr}">${nft.addr}</a> has new <a href="https://etherscan.io/tx/${nft.hash}">tx</a>, type=${nft.transactionType}, collection=<a href="https://etherscan.io/token/${nft.contractAddress}">${nft.tokenName}</a>, tokenId=${nft.tokenID}\n`;
+            message += `<a href="https://etherscan.io/address/${
+                nft.addr
+            }">${nft.addr.slice(
+                -6
+            )}</a> has new <a href="https://etherscan.io/tx/${
+                nft.hash
+            }">tx</a>, type=${
+                nft.transactionType
+            }, collection=<a href="https://etherscan.io/token/${
+                nft.contractAddress
+            }">${nft.tokenName} (${nft.contractAddress.slice(
+                0,
+                6
+            )})</a>, tokenId=${nft.tokenID}\n`;
             // 更新lastest block number
             await runSql(
                 `update tb_monitoring_address set latest_blknum=${nft.blockNumber} where address='${nft.addr}'`
