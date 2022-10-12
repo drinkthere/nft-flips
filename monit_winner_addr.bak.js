@@ -362,6 +362,8 @@ const fetchMaxSupply = async (contract, abi) => {
         maxSupply = await contract.maxSupply();
     } else if (abi.indexOf("maxToken") != -1) {
         maxSupply = await contract.maxToken();
+    } else if (abi.indexOf("collectionSize") != -1) {
+        maxSupply = await contract.collectionSize();
     }
     return maxSupply;
 };
