@@ -3,6 +3,7 @@
 const ethers = require("ethers");
 const TelegramBot = require("node-telegram-bot-api");
 const HttpsProxyAgent = require("https-proxy-agent");
+const fetch = require("node-fetch");
 const fs = require("fs");
 const log = require("./utils/log.js");
 
