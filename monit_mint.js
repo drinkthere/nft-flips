@@ -53,7 +53,7 @@ const initDb = async () => {
     console.log("Finish initializing database.");
 };
 const loadWinnerList = async () => {
-    const sql = "SELECT address FROM tb_winner_address";
+    const sql = "SELECT address FROM tb_winner_address where status=1";
     const rows = await db.all(sql);
     rows.map((row) => {
         app.winners.push(row.address);
