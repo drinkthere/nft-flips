@@ -1,4 +1,4 @@
-const { sleep } = require("./utills/utils");
+const { sleep } = require("./utils/utils");
 const fetch = require("node-fetch");
 const TelegramBot = require("node-telegram-bot-api");
 const HttpsProxyAgent = require("https-proxy-agent");

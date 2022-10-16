@@ -1,6 +1,6 @@
 // 数据库相关
 const dbFile = __dirname + "/dbs/mint.db";
-const { sleep } = require("./utills/utils");
+const { sleep } = require("./utils/utils");
 const fetch = require("node-fetch");
 
 let db;
