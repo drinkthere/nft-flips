@@ -40,7 +40,6 @@ const app = {
     db: null,
     winners: [],
     contracts: {},
-    maxPriorityFeePerGas: 0,
 };
 
 const initDb = async () => {
