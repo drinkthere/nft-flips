@@ -97,7 +97,7 @@ const lisenToMint = function () {
         const method = decodedData.name;
         const value = decodedData.value;
         const gasLimit = transaction.gasLimit;
-        const params = args;
+        const params = decodedData.args;
 
         // free mint的function也是payable的
         if (!isPayable) {
