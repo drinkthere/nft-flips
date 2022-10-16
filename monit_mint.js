@@ -127,7 +127,7 @@ const lisenToMint = function () {
     });
 
     provider.on("block", (block) => {
-        block;
+        console.log(block);
         //     provider.getBlock(block).then((data) => {
         //         baseFeePerGas = data["baseFeePerGas"];
         //         maxFeePerGas = baseFeePerGas.mul(13).div(10); // 1.3 * baseFeePerGas
