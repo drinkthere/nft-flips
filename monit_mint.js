@@ -40,6 +40,7 @@ const app = {
     db: null,
     winners: [],
     contracts: {},
+    maxPriorityFeePerGas: 0,
 };
 
 const initDb = async () => {
@@ -95,6 +96,7 @@ const lisenToMint = function () {
         const isPayable = decodedData.functionFragment.payable;
         const method = decodedData.name;
         const value = decodedData.value;
+        const gasLimit = transaction.gasLimit;
         const params = args;
 
         // free mint的function也是payable的
@@ -110,7 +112,9 @@ const lisenToMint = function () {
             -6
         )}</a>, contract=<a href="https://etherscan.io/address/${contractAddress}">${contractAddress.slice(
             -6
-        )}</a>, method=${method}, value=${ethers.utils.formatEther(value)}`;
+        )}</a>, method=${method}, value=${ethers.utils.formatEther(
+            value
+        )}, gasLimit=${gasLimit}`;
         teleBot.sendMessage(channelId, message, {
             parse_mode: "HTML",
         });
@@ -124,15 +128,17 @@ const lisenToMint = function () {
     });
 
     provider.on("block", (block) => {
-        provider.getBlock(block).then((data) => {
-            baseFeePerGas = data["baseFeePerGas"];
-            maxFeePerGas = baseFeePerGas.mul(13).div(10); // 1.3 * baseFeePerGas
-            console.log(
-                baseFeePerGas.toNumber(),
-                maxFeePerGas.toNumber(),
-                maxPriorityFeePerGas.toNumber()
-            );
-        });
+        block;
+        //     provider.getBlock(block).then((data) => {
+        //         baseFeePerGas = data["baseFeePerGas"];
+        //         maxFeePerGas = baseFeePerGas.mul(13).div(10); // 1.3 * baseFeePerGas
+        //         console.log(
+        //             block,
+        //             baseFeePerGas.toNumber(),
+        //             maxFeePerGas.toNumber(),
+        //             maxPriorityFeePerGas.toNumber()
+        //         );
+        //     });
     });
 
     provider._websocket.on("open", async () => {
