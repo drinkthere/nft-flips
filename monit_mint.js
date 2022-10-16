@@ -69,7 +69,7 @@ const lisenToMint = function () {
 
         // 确保user 在白名单中
         const user = transaction["from"].toLocaleLowerCase();
-        if (winners.indexOf(user) == -1) {
+        if (app.winners.indexOf(user) == -1) {
             return;
         }
 
