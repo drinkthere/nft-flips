@@ -46,5 +46,11 @@ const main = async () => {
         "CREATE TABLE tb_monitoring_address (id INTEGER PRIMARY KEY AUTOINCREMENT, address VARCHAR(42), latest_blknum INT DEFAULT 0, STATUS TINYINT(1) DEFAULT 0, create_time DATETIME DEFAULT CURRENT_TIMESTAMP, modify_time DATETIME DEFAULT CURRENT_TIMESTAMP)"
     );
     console.log("table tb_monitoring_address hes been created");
+
+    // create table tb_winner_address, 监控的address
+    await runSql(
+        "CREATE TABLE tb_winner_address (id INTEGER PRIMARY KEY AUTOINCREMENT, address VARCHAR(42), STATUS TINYINT(1) DEFAULT 0, create_time DATETIME DEFAULT CURRENT_TIMESTAMP, modify_time DATETIME DEFAULT CURRENT_TIMESTAMP)"
+    );
+    console.log("table tb_winner_address hes been created");
 };
 main();

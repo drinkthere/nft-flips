@@ -8,6 +8,7 @@
     "minimist": "^1.2.6",
     "node-fetch": "^2.6.7",
     "node-telegram-bot-api": "^0.59.0",
+    "opensea-js": "^4.0.12",
     "sqlite": "^4.1.2",
     "sqlite3": "^5.0.11"
   }

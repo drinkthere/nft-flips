@@ -196,7 +196,8 @@ const main = async () => {
     await initDb();
     // 加载白名单address
     await loadWhitelist();
-    // 监听白名单
+
+    // 监听地址动作
     lisenToMint();
 };
 main();
