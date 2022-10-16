@@ -92,16 +92,43 @@ const isInteger = (obj) => {
 };
 
 const main = async () => {
-    const contractAddr = "0x6Ae978e0C8466eB5371592b1870bACc36Bdbf163";
-    // const contractAddr = "0xFEBe379C90052123D5cC2b8863496f902F9FA542";
-    const hash =
-        "0x081936c56e11a5310d163e2e34437de40f7c1d90e1883bf8411acb096b89e076";
-    app.contracts[contractAddr] = {
-        abi: "",
-        maxSupply: 0,
-        totalSupply: 0,
-        txInfo: null,
-    };
+    const tx =
+        "0x5bb177442008bf6c383fece02e5a7e880c966fca6a5b6d36bb0de1a89594ddd2";
+    const transaction = await provider.getTransaction(tx);
+
+    // 确保gas > 50000, 如果 < 50000 可能是transfer或者setApprovalForAll操作，这个后续我们再针对性处理
+    if (transaction.gasLimit.toNumber() < 50000) {
+        return;
+    }
+
+    // 解析合约的方法和参数： 获取ABI，解析参数
+    const contractAddress = transaction.to;
+    await fetchAbi(contractAddress);
+    const abi = app.contracts[contractAddress].abi;
+    const iface = new ethers.utils.Interface(abi);
+    const decodedData = iface.parseTransaction({
+        data: transaction.data,
+        value: transaction.value,
+    });
+    const user = transaction.from;
+    const isPayable = decodedData.functionFragment.payable;
+    const method = decodedData.name;
+    const value = decodedData.value;
+    const gasLimit = transaction.gasLimit;
+    const params = decodedData.args;
+
+    const message = `user=<a href="https://etherscan.io/address/${user}">${user.slice(
+        -6
+    )}</a>, contract=<a href="https://etherscan.io/address/${contractAddress}">${contractAddress.slice(
+        -6
+    )}</a>, method=${method}, value=${ethers.utils.formatEther(
+        value
+    )}, gasLimit=${gasLimit}`;
+    console.log(isPayable, message, params);
+    process.exit();
+    if (decodedData == null) {
+        return;
+    }
 
     try {
         // 获取contract的abi

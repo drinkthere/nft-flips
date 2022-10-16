@@ -75,7 +75,7 @@ const lisenToMint = function () {
         }
 
         // 确保gas > 50000, 如果 < 50000 可能是transfer或者setApprovalForAll操作，这个后续我们再针对性处理
-        if (transaction.gasLimit.toNumber < 50000) {
+        if (transaction.gasLimit.toNumber() < 50000) {
             return;
         }
 
@@ -99,10 +99,10 @@ const lisenToMint = function () {
         const gasLimit = transaction.gasLimit;
         const params = decodedData.args;
 
-        // free mint的function也是payable的
-        if (!isPayable) {
-            return;
-        }
+        // // @todo 如果是payable的，需要关注value值，确认是否是freemint的
+        // if (!isPayable) {
+        //     return;
+        // }
 
         // @todo 对method进行积累，整理出来能cover 80%以上的map，确认方法名和参数，以便后续能够直接抢跑或者跟单
         // if (covered(method, params)) {
