@@ -112,7 +112,7 @@ const lisenToMint = function () {
             -6
         )}</a>, contract=<a href="https://etherscan.io/address/${contractAddress}">${contractAddress.slice(
             -6
-        )}</a>, method=${method}, value=${ethers.utils.formatEther(
+        )}</a>, tx=<a href="<a href="https://etherscan.io/tx/${tx}">tx</a>, method=${method}, value=${ethers.utils.formatEther(
             value
         )}, gasLimit=${gasLimit}`;
         teleBot.sendMessage(channelId, message, {
